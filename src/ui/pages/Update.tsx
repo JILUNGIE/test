@@ -1,17 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ReactLogo from "../components/svg/ReactLogo";
 
 function Update() {
+  const [updateMsg, setUpdateMsg] = useState<string>("");
   useEffect(() => {
-    window.electron.sendTest();
-    window.electron.subscribeAppVersion((ver) => {
-      console.log(ver);
+    window.electron.subscribeAppVersion((msg) => {
+      setUpdateMsg(msg);
     });
   }, []);
   return (
     <main className="flex flex-col justify-center items-center h-full">
       <ReactLogo />
-      <span className="font-bold">updating... chekc</span>
+      <span className="font-bold">{updateMsg}</span>
       <input
         type="range"
         className="w-60 mt-2 pointer-events-none"

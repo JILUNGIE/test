@@ -13,5 +13,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
     subscribeAppVersion: (callback) => ipcOn("update-channel", (version) => {
         callback(version);
     }),
+    subscribeDetectPortList: (callback) => ipcOn("detected-port-list", (portList) => {
+        callback(portList);
+    }),
     sendTest: () => ipcSend("test", "hi"),
 });

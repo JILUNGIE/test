@@ -53,5 +53,4 @@ class winManager {
         return this.windowMap.has(id);
     }
 }
-const windowManager = new winManager();
-export default windowManager;
+export default winManager;

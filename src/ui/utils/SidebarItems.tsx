@@ -1,7 +1,7 @@
 const SidebarItems = [
   {
     id: 1,
-    path: "/",
+    path: "/home",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"

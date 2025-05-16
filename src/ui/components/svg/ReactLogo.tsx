@@ -1,4 +1,4 @@
-const ReactLogo = () => {
+function ReactLogo() {
   return (
     <svg
       width="200"
@@ -34,6 +34,6 @@ const ReactLogo = () => {
       <circle cx="420.9" cy="296.5" r="45.7" fill="#61DAFB" />
     </svg>
   );
-};
+}
 
 export default ReactLogo;

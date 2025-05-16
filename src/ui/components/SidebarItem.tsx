@@ -3,11 +3,16 @@ import { Link } from "react-router";
 
 interface ISidebarItem {
   path: string;
+  className: string;
 }
 
-function SidebarItem({ children, path }: PropsWithChildren<ISidebarItem>) {
+function SidebarItem({
+  children,
+  path,
+  className,
+}: PropsWithChildren<ISidebarItem>) {
   return (
-    <div>
+    <div className={className}>
       <Link to={path}>{children}</Link>
     </div>
   );

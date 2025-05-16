@@ -3,10 +3,14 @@ import SidebarItem from "./SidebarItem";
 
 function SideBar() {
   return (
-    <div className="bg-[#121214] h-full w-full box-border 2xl:p-5 2xl:pt-10">
-      <ul className="2xl:flex 2xl:flex-col 2xl:justify-center 2xl:items-center 2xl:gap-10 flex">
+    <div className="bg-[#121214] h-full 2xl:w-full box-border p-5 2xl:pt-10">
+      <ul className="2xl:flex-col 2xl:justify-center 2xl:gap-10 flex items-center not-2xl:h-full ">
         {SidebarItems.map((value) => (
-          <SidebarItem key={value.id} path={value.path}>
+          <SidebarItem
+            className="not-2xl:mr-10"
+            key={value.id}
+            path={value.path}
+          >
             {value.icon}
           </SidebarItem>
         ))}

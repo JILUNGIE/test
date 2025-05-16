@@ -7,7 +7,7 @@ function Layout() {
       <aside className="2xl:row-start-1 2xl:row-span-full 2xl:col-start-1 2xl:col-span-1 h-full row-start-1 row-span-1 col-start-1 col-span-full">
         <SideBar />
       </aside>
-      <main className="2xl:row-start-1 2xl:row-span-full 2xl:col-start-2 2xl:col-span-full row-start-2 row-span-full col-start-1 col-span-full">
+      <main className="2xl:row-start-1 2xl:row-span-full 2xl:col-start-2 2xl:col-span-full row-start-2 row-span-full col-start-1 col-span-full box-border p-5">
         <Outlet />
       </main>
     </div>

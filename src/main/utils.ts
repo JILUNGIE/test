@@ -11,10 +11,10 @@ const isDev = () => {
 
 export { PORT, isDev };
 
-function ipcWebContentsSend(
+function ipcWebContentsSend<T = string>(
   key: string,
   webContents: WebContents,
-  payload: string
+  payload: T
 ) {
   webContents.send(key, payload);
 }
