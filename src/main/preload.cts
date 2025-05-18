@@ -12,13 +12,22 @@ function ipcSend(key: string, payload: any) {
 
 electron.contextBridge.exposeInMainWorld("electron", {
   subscribeAppVersion: (callback) =>
-    ipcOn("update-channel", (version: string) => {
+    ipcOn("channel-update", (version: string) => {
       callback(version);
     }),
   subscribeDetectPortList: (callback) =>
-    ipcOn("detected-port-list", (portList: any) => {
+    ipcOn("channel-detected_port", (portList: any) => {
       callback(portList);
     }),
-
-  sendTest: () => ipcSend("test", "hi"),
+  subscribeConnectPortList: (callback) =>
+    ipcOn("channel-connected_port", (portList: []) => {
+      callback(portList);
+    }),
+  subscribeErrorMessage: (callback) =>
+    ipcOn("channel-error_message", (msg: string[]) => {
+      callback(msg);
+    }),
+  requestDetectPortList: () => ipcSend("channel-detected_port", null),
+  reqPort: (status, portInfo, data) =>
+    ipcSend("channel-req-port", { status, portInfo, data }),
 } satisfies Window["electron"]);

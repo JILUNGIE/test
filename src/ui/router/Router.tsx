@@ -4,6 +4,7 @@ import Layout from "../pages/Layout";
 import Home from "../pages/Home";
 import Wrieless from "../pages/Wrieless";
 import Update from "../pages/Update";
+import DeviceInfo from "../pages/DeviceInfo";
 
 const router = createHashRouter([
   {
@@ -13,6 +14,12 @@ const router = createHashRouter([
       {
         path: "/home",
         element: <Home />,
+        children: [
+          {
+            path: ":path",
+            element: <DeviceInfo />,
+          },
+        ],
       },
       {
         path: "/wireless",

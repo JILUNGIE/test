@@ -25,7 +25,7 @@ class autoUpdateManager {
     return autoUpdater.checkForUpdates();
   }
 
-  public eventListener(cb: (type: UpdateType, msg: string) => void) {
+  public addEventListener(cb: (type: UpdateType, msg: string) => void) {
     autoUpdater.on("checking-for-update", () =>
       cb("CHECKING", "업데이트 체크 중....")
     );

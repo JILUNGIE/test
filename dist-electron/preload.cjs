@@ -10,11 +10,18 @@ function ipcSend(key, payload) {
     electron.ipcRenderer.send(key, payload);
 }
 electron.contextBridge.exposeInMainWorld("electron", {
-    subscribeAppVersion: (callback) => ipcOn("update-channel", (version) => {
+    subscribeAppVersion: (callback) => ipcOn("channel-update", (version) => {
         callback(version);
     }),
-    subscribeDetectPortList: (callback) => ipcOn("detected-port-list", (portList) => {
+    subscribeDetectPortList: (callback) => ipcOn("channel-detected_port", (portList) => {
         callback(portList);
     }),
-    sendTest: () => ipcSend("test", "hi"),
+    subscribeConnectPortList: (callback) => ipcOn("channel-connected_port", (portList) => {
+        callback(portList);
+    }),
+    subscribeErrorMessage: (callback) => ipcOn("channel-error_message", (msg) => {
+        callback(msg);
+    }),
+    requestDetectPortList: () => ipcSend("channel-detected_port", null),
+    reqPort: (status, portInfo, data) => ipcSend("channel-req-port", { status, portInfo, data }),
 });
