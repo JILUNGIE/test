@@ -1,7 +1,7 @@
-import BaseChart from "./BaseChart";
+// import BaseChart from "./BaseChart";
 
-function Chart() {
-  return <BaseChart data />;
-}
+// function Chart() {
+//   // return <BaseChart />;
+// }
 
-export default Chart;
+// export default Chart;

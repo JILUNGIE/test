@@ -9,19 +9,21 @@ function ipcOn(key, callback) {
 function ipcSend(key, payload) {
     electron.ipcRenderer.send(key, payload);
 }
+function ipcInvoke(key, payload) {
+    return electron.ipcRenderer.invoke(key, payload);
+}
 electron.contextBridge.exposeInMainWorld("electron", {
-    subscribeAppVersion: (callback) => ipcOn("channel-update", (version) => {
-        callback(version);
+    subscribeChannelAppUpdate: (callback) => ipcOn("CHANNEL_APP_UPDATE", (payload) => {
+        callback(payload);
     }),
-    subscribeDetectPortList: (callback) => ipcOn("channel-detected_port", (portList) => {
-        callback(portList);
-    }),
-    subscribeConnectPortList: (callback) => ipcOn("channel-connected_port", (portList) => {
-        callback(portList);
+    subscribeChannelPortList: (callback) => ipcOn("CHANNEL_PORT_INFO", (payload) => {
+        callback(payload);
     }),
     subscribeErrorMessage: (callback) => ipcOn("channel-error_message", (msg) => {
         callback(msg);
     }),
-    requestDetectPortList: () => ipcSend("channel-detected_port", null),
-    reqPort: (status, portInfo, data) => ipcSend("channel-req-port", { status, portInfo, data }),
+    subscribeChannelSerialData: (callback) => ipcOn("CHANNEL_SERIAL_DATA", (data) => callback(data)),
+    theme: (payload) => ipcInvoke("CHANNEL_THEME", payload),
+    requestPortList: () => ipcSend("CHANNEL_PORT_INFO", null),
+    requestPortActions: (payload) => ipcSend("CHANNEL_PORT_ACTIONS", payload),
 });

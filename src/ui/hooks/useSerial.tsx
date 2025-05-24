@@ -1,29 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+export const subscribeSerialData = (
+  callback: (payload: ISerialData) => void
+) => {
+  window.electron.subscribeChannelSerialData((paylaod) => callback(paylaod));
+};
 
 function useSerial() {
-  const [detectedPortList, setPortList] = useState<PortInfo[]>([]);
-  const [connectedPortList, setConnectedPortList] = useState<
-    Map<string, number>
-  >(new Map());
+  const [portList, setPortList] = useState<IPortInfo[]>([]);
+  const serialErr = useRef("");
 
-  const sendData = (path: string[], data: number[]) => {
-    window.electron.reqPort("SEND_DATA", path, data);
+  const sendPacket = (path: string[], packet: number[]) => {
+    window.electron.requestPortActions({
+      event: "WRITE",
+      data: {
+        path,
+        packet,
+      },
+    });
   };
 
   useEffect(() => {
-    window.electron.subscribeDetectPortList((list) => {
-      setPortList(list);
-    });
-
-    window.electron.subscribeConnectPortList((list) => {
-      const obj2map = new Map(
-        list.map(({ path, baudRate }) => [path, baudRate])
-      );
-
-      setConnectedPortList(obj2map);
+    window.electron.subscribeChannelPortList((portList) => {
+      setPortList(portList);
     });
   }, []);
-  return { detectedPortList, connectedPortList, sendData };
+
+  return {
+    portList,
+    sendPacket,
+    serialErr,
+  };
 }
 
 export default useSerial;

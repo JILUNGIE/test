@@ -6,12 +6,13 @@ class packetParserModule {
   private buffer: number[] = [];
   private ETX = 0xfe;
 
-  private resultPacket: number[][] = [];
-
   private reqCommandMap = new Map<number, string>([
-    [0x02, "REQ_BAT_STATUS"],
-    [0x04, "REQ_SENSOR_RAW_DATA"],
-    [0x07, "REQ_SENSOR_RPY_DATA"],
+    [0x03, "RES_BAT_STATUS_REQ"],
+    [0x05, "RES_SENSOR_RAW_DATA_REQ"],
+    [0x06, "RES_SENSOR_DATA"],
+    [0x08, "RES_SENSOR_RPY_DATA_REQ"],
+    [0x09, "RES_SENSOR_RPY_DATA"],
+    [0x9a, "RES_LED_ON_OFF"],
   ]);
 
   private eventParser(packet: number[]) {
@@ -30,35 +31,36 @@ class packetParserModule {
     return temp;
   }
 
-  public parser(packet: number[], callback: () => void) {
+  public parser(packet: number[]) {
     let checksum = 0;
     this.buffer.push(...packet);
+    const resultPacket: number[][] = [];
 
     while (this.buffer.length > 7) {
-      console.log("PACKET: ", this.buffer);
+      // console.log("received PACKET: ", this.buffer);
       if (this.buffer[this.IDX_STX] === this.STX) {
-        console.log("1: PASS STX");
+        //console.log("1: PASS STX");
         if (!this.reqCommandMap.has(this.buffer[this.IDX_CMD])) {
           this.buffer.shift();
           continue;
         }
 
         const dataLength = this.buffer[this.IDX_LEN];
-        console.log("1-1 dataLenth: ", dataLength);
+        //console.log("1-1 dataLenth: ", dataLength);
 
         for (let i = 0; i <= dataLength + 2; i++) {
-          console.log("1-2 checksum cal: ", this.buffer[i]);
+          //console.log("1-2 checksum cal: ", this.buffer[i]);
           checksum += this.buffer[i];
         }
 
-        checksum = checksum % 256;
-        console.log("1-2: ", this.buffer[dataLength + 3], checksum);
+        checksum = (checksum + 0xfe + 0x0a + 0x0d) % 256;
+        //console.log("1-2: ", this.buffer[dataLength + 3], checksum);
 
         if (this.buffer[dataLength + 3] !== checksum) {
           this.buffer.shift();
           continue;
         }
-        console.log("2: PASS CHECKSUM");
+        //console.log("2: PASS CHECKSUM");
 
         if (
           this.buffer[dataLength + 4] !== this.ETX ||
@@ -69,12 +71,21 @@ class packetParserModule {
         }
 
         const packet = this.buffer.splice(0, dataLength + 7);
+        resultPacket.push(packet);
 
-        this.resultPacket.push(packet);
+        console.log("process PACKET: ", resultPacket);
+        return {
+          message: "assemblePacket",
+          packet: resultPacket,
+        };
       } else {
         this.buffer.shift();
       }
     }
+    return {
+      message: "Packet Lost",
+      packet: [],
+    };
   }
 }
 

@@ -1,39 +1,74 @@
 type UnsubscribeFunction = () => void;
 
-interface PortInfo {
+type UpdateEventType =
+  | "checking-for-update"
+  | "update-available"
+  | "update-not-available"
+  | "error"
+  | "download-progress"
+  | "update-downloaded";
+
+interface IPortInfo {
   path: string;
-  manufacturer: string | undefined;
-  serialNumber: string | undefined;
-  pnpId: string | undefined;
-  locationId: string | undefined;
-  productId: string | undefined;
-  vendorId: string | undefined;
+  manufacturer: string | "unknwon";
+  baudRate: number;
+  status: "disconnected" | "connected";
 }
 
-interface IReqList {
+interface IPortActions {
+  event: "CONNECT" | "DISCONNECT" | "WRITE";
+  data: {
+    path: string[];
+    baudRate?: number;
+    packet?: number[];
+  };
+}
+
+interface IUpdatePayload {
+  event: UpdateEventType | null;
+  data: {
+    message: string;
+    progress?: number;
+  };
+}
+
+interface IThemePayload {
+  event: "toggle" | "getTheme";
+  dark?: boolean;
+}
+
+interface ChannelEventMapping {
+  CHANNEL_APP_UPDATE: IUpdatePayload;
+  CHANNEL_THEME: IThemePayload;
+  CHANNEL_PORT_INFO: IPortInfo[];
+  CHANNEL_PORT_ACTIONS: IPortActions;
+  CHANNEL_SERIAL_DATA: ISerialData;
+}
+
+interface ISerialData {
   path: string;
-  baudRate: number;
+  data: {
+    message: string;
+    packet: number[][];
+  };
 }
 
 interface Window {
   electron: {
-    subscribeAppVersion: (
-      callback: (version: string) => void
+    subscribeChannelAppUpdate: (
+      callback: (payload: IUpdatePayload) => void
     ) => UnsubscribeFunction;
-    subscribeDetectPortList: (
-      callback: (portList) => void
-    ) => UnsubscribeFunction;
-    subscribeConnectPortList: (
-      callback: (portList: []) => void
+    subscribeChannelPortList: (
+      callback: (portList: IPortInfop[]) => void
     ) => UnsubscribeFunction;
     subscribeErrorMessage: (
       callback: (msg: string[]) => void
     ) => UnsubscribeFunction;
-    requestDetectPortList: () => void;
-    reqPort: (
-      status: string,
-      reqList: IReqList[] | string[],
-      data: number[] | undefined
+    subscribeChannelSerialData: (
+      callback: (payload: ISerialData) => void
     ) => void;
+    theme: (payload: IThemePayload) => Promise<IThemePayload>;
+    requestPortList: () => void;
+    requestPortActions: (payload: IPortActions) => void;
   };
 }

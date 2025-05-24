@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import { isDev, PORT } from "../utils.js";
-import { getPreloadPath, getUIPath } from "../pathResolver.js";
+import { getPreloadPath, getUIPath } from "../utils/pathResolver.js";
 
 interface IWinConfig {
   id: string;

@@ -1,6 +1,7 @@
 function ReactLogo() {
   return (
     <svg
+      className="animate-[var(--animate-wiggle)]"
       width="200"
       height="200"
       viewBox="0 0 841.9 595.3"

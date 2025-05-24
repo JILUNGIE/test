@@ -10,24 +10,30 @@ function ipcSend(key: string, payload: any) {
   electron.ipcRenderer.send(key, payload);
 }
 
+function ipcInvoke<T extends keyof ChannelEventMapping>(
+  key: T,
+  payload: any
+): Promise<ChannelEventMapping[T]> {
+  return electron.ipcRenderer.invoke(key, payload);
+}
+
 electron.contextBridge.exposeInMainWorld("electron", {
-  subscribeAppVersion: (callback) =>
-    ipcOn("channel-update", (version: string) => {
-      callback(version);
+  subscribeChannelAppUpdate: (callback) =>
+    ipcOn("CHANNEL_APP_UPDATE", (payload: IUpdatePayload) => {
+      callback(payload);
     }),
-  subscribeDetectPortList: (callback) =>
-    ipcOn("channel-detected_port", (portList: any) => {
-      callback(portList);
-    }),
-  subscribeConnectPortList: (callback) =>
-    ipcOn("channel-connected_port", (portList: []) => {
-      callback(portList);
+  subscribeChannelPortList: (callback) =>
+    ipcOn("CHANNEL_PORT_INFO", (payload: IPortInfo[]) => {
+      callback(payload);
     }),
   subscribeErrorMessage: (callback) =>
     ipcOn("channel-error_message", (msg: string[]) => {
       callback(msg);
     }),
-  requestDetectPortList: () => ipcSend("channel-detected_port", null),
-  reqPort: (status, portInfo, data) =>
-    ipcSend("channel-req-port", { status, portInfo, data }),
+  subscribeChannelSerialData: (callback) =>
+    ipcOn("CHANNEL_SERIAL_DATA", (data: ISerialData) => callback(data)),
+  theme: (payload: IThemePayload) => ipcInvoke("CHANNEL_THEME", payload),
+  requestPortList: () => ipcSend("CHANNEL_PORT_INFO", null),
+  requestPortActions: (payload: IPortActions) =>
+    ipcSend("CHANNEL_PORT_ACTIONS", payload),
 } satisfies Window["electron"]);

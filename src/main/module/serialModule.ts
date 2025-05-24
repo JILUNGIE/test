@@ -1,61 +1,79 @@
 import { SerialPort } from "serialport";
 
-interface IPortInfo {
+interface IConnectHandler {
   path: string;
-  baudRate: number;
+  data: number[];
 }
 
 class serialModule {
-  private portList: Map<string, SerialPort> = new Map();
+  private portList: IPortInfo[] = [];
+  private activeList: Map<string, SerialPort> = new Map();
 
-  public async detecedlist() {
-    return await SerialPort.list();
-  }
-
-  public async checkPortList() {
-    const ports = await this.detecedlist();
-
-    for (const [key] of this.portList) {
-      const isAlive = ports.some((port) => port.path === key);
-      if (!isAlive) {
-        this.portList.delete(key);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private checkPortStatus(portList: any[]) {
+    this.activeList.forEach((value, key) => {
+      const isTrue = portList.some((port) => port.path === key);
+      if (!isTrue) {
+        this.activeList.delete(key);
       }
-    }
+    });
   }
 
-  public connectedList() {
-    const obj = Object.fromEntries(this.portList);
-    const arr = Object.entries(obj).map(([path, SerialPort]) => ({
-      path,
-      baudRate: SerialPort.baudRate,
-    }));
+  private updatePortStatus(
+    path: string,
+    baudRate: number,
+    status: "connected" | "disconnected"
+  ) {
+    this.portList = this.portList.map((port) =>
+      port.path === path ? { ...port, status, baudRate } : port
+    );
+  }
 
-    return arr;
+  public async scanPorts() {
+    const portList = await SerialPort.list();
+    this.checkPortStatus(portList);
+    this.portList = portList.map((port) => {
+      return {
+        path: port.path,
+        manufacturer: port.manufacturer || "unknwon",
+        baudRate: 115200,
+        status: this.activeList.has(port.path) ? "connected" : "disconnected",
+      };
+    });
+
+    return this.portList;
   }
 
   private _connect(
     path: string,
     baudRate: number,
-    handler: (chunk: number[]) => void,
+    handler: (data: IConnectHandler) => void,
     timeout: number
   ) {
     return new Promise<string>((resolve, reject) => {
+      if (this.activeList.has(path)) {
+        return reject(`${path} connect already done!`);
+      }
       const timer = setTimeout(() => {
         reject(`${port.path} connect timeout!`);
       }, timeout);
+
       const port = new SerialPort({
         path,
         baudRate,
         autoOpen: false,
       });
+      // const parser = port.pipe(new DelimiterParser({ delimiter: "\r" }));
 
       port.open((err) => {
         if (err) {
           clearTimeout(timer);
           return reject(String(err));
         }
-        port.on("data", (chunk) => handler(chunk));
-        this.portList.set(port.path, port);
+        port.on("data", (chunk) => handler({ path: port.path, data: chunk }));
+        this.updatePortStatus(port.path, port.baudRate, "connected");
+        this.activeList.set(port.path, port);
+
         clearTimeout(timer);
         return resolve(`${port.path} connect done!`);
       });
@@ -64,19 +82,23 @@ class serialModule {
 
   private _disconnect(path: string, timeout: number) {
     return new Promise<string>((resolve, reject) => {
+      if (!this.activeList.has(path)) {
+        return reject("Already disconnect");
+      }
       const timer = setTimeout(
         () => reject(`${path} disconnect timeout!`),
         timeout
       );
-      const port = this.portList.get(path);
+      const port = this.activeList.get(path);
 
-      port?.close((err) => {
+      port!.close((err) => {
         if (err) {
           clearTimeout(timer);
-          return reject(err);
+          return reject(err.message);
         }
         clearTimeout(timer);
-        this.portList.delete(path);
+        this.updatePortStatus(path, 115200, "disconnected");
+        this.activeList.delete(path);
         return resolve(`${path} disconnect done!`);
       });
     });
@@ -84,15 +106,12 @@ class serialModule {
 
   private _write(path: string, data: number[], timeout: number) {
     return new Promise<string>((resolve, reject) => {
-      if (!this.portList.has(path)) {
-        return reject(`${path} can't control?`);
+      if (!this.activeList.has(path)) {
+        return reject(`${path} No Connected...?`);
       }
-      const timer = setTimeout(
-        () => reject(`${path} disconnect timeout!`),
-        timeout
-      );
+      const timer = setTimeout(() => reject(`${path} write timeout!`), timeout);
 
-      this.portList.get(path)?.write(data, undefined, (err) => {
+      this.activeList.get(path)?.write(data, undefined, (err) => {
         if (err) {
           clearTimeout(timer);
           return reject(err);
@@ -103,45 +122,40 @@ class serialModule {
     });
   }
 
-  public async connect(ports: IPortInfo[], handler: (msg: number[]) => void) {
+  public async connect(
+    pathList: string[],
+    baudRate: number,
+    handler: (data: IConnectHandler) => void
+  ) {
     const result = [];
-    for (const port of ports) {
+    for (const path of pathList) {
       try {
-        const ret = await this._connect(
-          port.path,
-          port.baudRate,
-          handler,
-          1000
-        );
-        result.push(ret);
+        await this._connect(path, baudRate, handler, 1000);
       } catch (err) {
-        result.push(err);
+        result.push({ path, err });
       }
     }
 
     return result;
   }
 
-  public async disconnect(ports: IPortInfo[]) {
+  public async disconnect(pathList: string[]) {
     const result = [];
-    for (const port of ports) {
+    for (const path of pathList) {
       try {
-        const ret = await this._disconnect(port.path, 1000);
-        result.push(ret);
+        await this._disconnect(path, 1000);
       } catch (err) {
-        result.push(err);
+        result.push({ path: path, err });
       }
     }
     return result;
   }
 
-  public async write(ports: IPortInfo[], data: number[]) {
+  public async write(pathList: string[], data: number[]) {
     const result = [];
-    for (const port of ports) {
-      console.log(port);
+    for (const path of pathList) {
       try {
-        const ret = await this._write(port.path, data, 1000);
-        result.push(ret);
+        await this._write(path, data, 1000);
       } catch (err) {
         result.push(err);
       }

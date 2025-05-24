@@ -13,7 +13,9 @@
     "dist:win": "npm run transpile:electron && npm run build && electron-builder --win --x64"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.1.2",
     "@tailwindcss/vite": "^4.1.4",
+    "@types/three": "^0.176.0",
     "electron-updater": "^6.6.2",
     "laravel-vite-plugin": "^1.2.0",
     "react": "^19.0.0",
@@ -23,6 +25,7 @@
     "recharts": "^2.15.3",
     "serialport": "^13.0.0",
     "tailwindcss": "^4.1.4",
+    "three": "^0.176.0",
     "usb": "^2.15.0",
     "zustand": "^5.0.4"
   },
@@ -35,6 +38,7 @@
     "cross-env": "^7.0.3",
     "electron": "^36.1.0",
     "electron-builder": "^26.0.12",
+    "electron-rebuild": "^3.2.9",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",

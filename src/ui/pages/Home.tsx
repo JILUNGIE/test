@@ -1,70 +1,103 @@
 import { useEffect, useState } from "react";
 import GridBox from "../components/GridBox";
 import PortSelectItem from "../components/PortSelectItem";
-import { Link, Outlet, useOutletContext } from "react-router";
+import { Link, Outlet, useNavigate, useOutletContext } from "react-router";
+import Button from "../components/Button";
+import { ButtonActionList } from "../utils/ButtonActionList";
 
 interface IOutletContext {
-  detectedPortList: PortInfo[];
-  connectedPortList: Map<string, number>;
-  sendData: (path: string[], data: number[]) => void;
+  portList: IPortInfo[];
+  sendPacket: (path: string[], data: number[]) => void;
+  serialData: number[][];
 }
 
 function Home() {
-  const { detectedPortList, connectedPortList, sendData } =
+  const { portList, sendPacket, serialData } =
     useOutletContext<IOutletContext>();
-  const [checkPort, setCheckPort] = useState<Map<string, number>>(new Map());
-  const onSelectCheckPortInfo = (
+  const [selectedPorts, setSelectedPorts] = useState<Map<string, number>>(
+    new Map()
+  );
+  const [isPath, setIsPath] = useState<boolean>();
+  const navigate = useNavigate();
+
+  const toggleCheck = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     path: string,
-    checked: boolean,
     baudRate: number
   ) => {
-    setCheckPort((prev) => {
-      const newMap = new Map(prev);
-      if (checked) {
-        newMap.set(path, baudRate);
-      } else {
-        newMap.delete(path);
-      }
+    const newMap = new Map(selectedPorts);
 
-      return newMap;
-    });
+    if (e.currentTarget.id === "checkbox") {
+      if (newMap.has(path)) {
+        newMap.delete(path);
+      } else {
+        newMap.set(path, baudRate);
+      }
+    } else if (e.currentTarget.id === "select") {
+      newMap.set(path, baudRate);
+    }
+    setSelectedPorts(newMap);
   };
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const obj = Object.fromEntries(checkPort);
-    const arr = Object.entries(obj).map(([path, baudRate]) => ({
-      path,
-      baudRate,
-    }));
-
-    console.log("obj: ", obj);
-    console.log("arr: ", arr);
-
-    window.electron.reqPort(e.currentTarget.id, arr, undefined);
+    const ports = portList.filter((port) => selectedPorts.has(port.path));
+    const pathList = ports.map((port) => port.path);
+    const baudRate = selectedPorts.get(ports[0].path);
+    //const pathList = ports.map(port => port.path);
+    window.electron.requestPortActions({
+      event: e.currentTarget.id as "CONNECT" | "DISCONNECT",
+      data: {
+        path: pathList,
+        baudRate,
+      },
+    });
   };
 
   useEffect(() => {
-    window.electron.requestDetectPortList();
+    const firstConnected = portList.find((port) => port.status === "connected");
+
+    if (firstConnected && location.pathname !== firstConnected.path) {
+      navigate(firstConnected.path);
+    }
+  }, [portList, navigate]);
+
+  useEffect(() => {
+    const result = portList.some((port) => port.status === "connected");
+
+    for (const path of selectedPorts.keys()) {
+      const ret = portList.some((port) => port.path === path);
+      if (!ret) {
+        console.log(path);
+        selectedPorts.delete(path);
+      }
+    }
+    setIsPath(result);
+  }, [portList]);
+
+  useEffect(() => {
+    window.electron.requestPortList();
   }, []);
 
   return (
     <div className="h-full w-full font-black ">
       <div className="grid grid-cols-6 grid-rows-5 gap-4 h-full">
         <GridBox gridInfo="col-span-3 row-span-2 2xl:col-span-2 2xl:row-span-5">
-          {detectedPortList.length === 0 ? (
+          {portList.length === 0 ? (
             <div className="h-full flex justify-center items-center">
               no Port...
             </div>
           ) : (
             <ul className="h-full w-full flex flex-col overflow-auto ">
               <div>
-                {detectedPortList.map((portInfo) => (
+                {portList.map((port: IPortInfo) => (
                   <PortSelectItem
-                    connectedPortList={connectedPortList}
-                    onSelect={onSelectCheckPortInfo}
-                    key={portInfo.path}
+                    port={port}
+                    handleChange={(e, path, baudRate) =>
+                      toggleCheck(e, path, baudRate)
+                    }
+                    key={port.path}
                   >
-                    {portInfo.path}
+                    {port.path}
                   </PortSelectItem>
                 ))}
               </div>
@@ -72,20 +105,24 @@ function Home() {
               <div className="flex mt-auto ml-auto">
                 <button
                   id="CONNECT"
-                  disabled={checkPort.size === 0 ? true : false}
+                  disabled={selectedPorts.size === 0 ? true : false}
                   onClick={onClick}
-                  className={`bg-green-400 p-1 mr-3 transition duration-150 ease-in-out ${
-                    checkPort.size === 0 ? `opacity-60` : `hover:opacity-80  `
+                  className={`bg-green-400 rounded-xl  p-1 mr-3 transition duration-150 ease-in-out ${
+                    selectedPorts.size === 0
+                      ? `opacity-60`
+                      : `hover:opacity-80  `
                   } `}
                 >
                   connect
                 </button>
                 <button
                   id="DISCONNECT"
-                  disabled={checkPort.size === 0 ? true : false}
+                  disabled={selectedPorts.size === 0 ? true : false}
                   onClick={onClick}
-                  className={`bg-red-400 p-1 mr-3 transition duration-150 ease-in-out ${
-                    checkPort.size === 0 ? `opacity-60` : `hover:opacity-80  `
+                  className={`bg-red-400 rounded-xl  p-1 mr-3 transition duration-150 ease-in-out ${
+                    selectedPorts.size === 0
+                      ? `opacity-60`
+                      : `hover:opacity-80  `
                   } `}
                 >
                   disconnect
@@ -94,40 +131,43 @@ function Home() {
             </ul>
           )}
         </GridBox>
-        <GridBox gridInfo="col-span-3 row-span-2 col-start-4 2xl:col-span-2 2xl:row-span-5 2xl:col-start-3">
-          <div className=" w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
-            <button
-              onClick={() =>
-                sendData(
-                  Array.from(connectedPortList.keys()),
-                  [0xa5, 0x99, 0, 0x53, 0xfe, 0x0a, 0x0d]
-                )
-              }
-              className="bg-amber-400 h-10 transition duration-150 hover:opacity-80"
-            >
-              LED
-            </button>
-            <button className="bg-pink-400 h-10 transition duration-150 hover:opacity-80">
-              BATTERY
-            </button>
-            <button className="bg-sky-400 h-10 transition duration-150 hover:opacity-80">
-              RPY
-            </button>
-            <button className="bg-sky-400 h-10 transition duration-150 hover:opacity-80">
-              ...?
-            </button>
+        <GridBox gridInfo="col-span-3 row-span-2 col-start-4 2xl:col-span-2 2xl:row-span-5 2xl:col-start-3 ">
+          <div className=" w-full h-full grid grid-cols-4 grid-rows-3 gap-2 2xl:grid-cols-4 2xl:grid-rows-10">
+            {ButtonActionList.map((button, index) => (
+              <Button
+                key={index}
+                value={button.value}
+                padding={button.padding}
+                color={button.color}
+                onClick={() =>
+                  sendPacket(Array.from(selectedPorts.keys()), button.packet)
+                }
+              />
+            ))}
           </div>
         </GridBox>
         <GridBox gridInfo="col-span-6 row-span-3 row-start-3 2xl:col-span-2 2xl:row-span-5 2xl:col-start-5">
           <div className="h-full w-full">
-            <div className="w-full h-10">
-              {Array.from(connectedPortList.entries()).map(([key]) => (
-                <Link className="w-full h-full mr-10 p-2 " key={key} to={key}>
-                  {key}
+            {portList.map((port) =>
+              port.status === "connected" ? (
+                <Link
+                  key={port.path}
+                  className="w-full h-full mr-10 p-2 hover:dark:bg-[#1A1A1E] hover:bg-[#F5F5F5] rounded-2xl"
+                  to={port.path}
+                >
+                  {port.path}
                 </Link>
-              ))}
+              ) : null
+            )}
+            <div className="h-[90%] 2xl:h-[97%]">
+              {isPath ? (
+                <Outlet context={{ serialData: { ...serialData } }} />
+              ) : (
+                <div className="flex justify-center items-center h-full">
+                  Nothing Connected...
+                </div>
+              )}
             </div>
-            <Outlet />
           </div>
         </GridBox>
       </div>

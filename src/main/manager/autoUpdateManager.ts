@@ -3,66 +3,71 @@ const { autoUpdater } = updatePkg;
 
 interface IOption {
   isAutoRestart: boolean;
+  allowPrerelease: boolean;
 }
-
-type UpdateType =
-  | "CHECKING"
-  | "UPDATE_AVAILABLE"
-  | "UPDATE_NOT_AVAILABLE"
-  | "ERROR"
-  | "DOWNLOADING"
-  | "DOWNLOADED";
+interface IListener {
+  event: UpdateEventType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: (...args: any[]) => void;
+}
 
 class autoUpdateManager {
   private isAutoRestart: boolean;
-  private noUpdateCallback: (() => void) | null = null;
   constructor(option: IOption) {
-    autoUpdater.allowPrerelease = true;
+    autoUpdater.allowPrerelease = option.allowPrerelease;
     this.isAutoRestart = option.isAutoRestart;
   }
+
+  private listeners: IListener[] = [];
 
   public checkUpdate() {
     return autoUpdater.checkForUpdates();
   }
 
-  public addEventListener(cb: (type: UpdateType, msg: string) => void) {
-    autoUpdater.on("checking-for-update", () =>
-      cb("CHECKING", "업데이트 체크 중....")
-    );
+  public addEventListener(
+    cb: (event: UpdateEventType, data?: number, err?: string) => void
+  ) {
+    const onChecking = () => cb("checking-for-update");
+    const onAvailable = () => cb("update-available");
+    const onNotAvailable = () => cb("update-not-available");
+    const onError = (err: Error) => cb("error", undefined, err.message);
+    const onDownloading = (data: number) => cb("download-progress", data);
+    const onDownloaded = () => cb("update-downloaded");
+    autoUpdater.on("checking-for-update", onChecking);
 
-    autoUpdater.on("update-available", () =>
-      cb("UPDATE_AVAILABLE", "업데이트 있음....")
-    );
+    autoUpdater.on("update-available", onAvailable);
 
-    autoUpdater.on("update-not-available", () => {
-      cb("UPDATE_NOT_AVAILABLE", "업데이트 없음....");
-    });
+    autoUpdater.on("update-not-available", onNotAvailable);
 
-    autoUpdater.on("error", (err) => cb("ERROR", String(err)));
+    autoUpdater.on("error", (err) => onError(err));
 
-    autoUpdater.on("download-progress", (progressObj) =>
-      cb("DOWNLOADING", `${progressObj.percent}%`)
+    autoUpdater.on("download-progress", (progress) =>
+      onDownloading(progress.percent)
     );
 
     autoUpdater.on("update-downloaded", () => {
       if (this.isAutoRestart) {
-        cb(
-          "DOWNLOADED",
-          "업데이트 파일 다운로드 완료... 3초 후 다시 시작 합니다."
-        );
-        return setTimeout(() => {
-          autoUpdater.quitAndInstall();
-        }, 3000);
+        onDownloaded();
+        autoUpdater.quitAndInstall();
       }
-      return cb(
-        "DOWNLOADED",
-        "업데이트 파일 다운로드 완료... 앱을 다시 시작해 주세요..."
-      );
+      onDownloaded();
     });
+
+    this.listeners.push({ event: "checking-for-update", handler: onChecking });
+    this.listeners.push({ event: "update-available", handler: onAvailable });
+    this.listeners.push({
+      event: "update-not-available",
+      handler: onNotAvailable,
+    });
+    this.listeners.push({ event: "error", handler: onError });
+    this.listeners.push({ event: "download-progress", handler: onDownloading });
+    this.listeners.push({ event: "update-downloaded", handler: onDownloaded });
   }
 
-  public isNoUpdate(cb: () => void) {
-    this.noUpdateCallback = cb;
+  public removeEventListener() {
+    this.listeners.forEach((listener) =>
+      autoUpdater.off(listener.event, listener.handler)
+    );
   }
 }
 
