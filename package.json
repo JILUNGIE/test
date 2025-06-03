@@ -1,7 +1,7 @@
 {
   "name": "vssa2",
   "private": true,
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -26,8 +26,7 @@
     "serialport": "^13.0.0",
     "tailwindcss": "^4.1.4",
     "three": "^0.176.0",
-    "usb": "^2.15.0",
-    "zustand": "^5.0.4"
+    "usb": "^2.15.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",

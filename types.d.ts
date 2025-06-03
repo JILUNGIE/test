@@ -18,8 +18,10 @@ interface IPortInfo {
 interface IPortActions {
   event: "CONNECT" | "DISCONNECT" | "WRITE";
   data: {
-    path: string[];
-    baudRate?: number;
+    port: {
+      path: string;
+      baudRate: number;
+    }[];
     packet?: number[];
   };
 }

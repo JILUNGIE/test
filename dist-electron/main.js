@@ -54,14 +54,14 @@ app.whenReady().then(() => {
                         message: "업데이트 없음....",
                     },
                 });
-                // windowManager.closeWindow("update");
-                // windowManager.createWindow({
-                //   id: "home",
-                //   height: 720,
-                //   width: 1024,
-                //   url: "home",
-                //   resizeable: true,
-                // });
+                windowManager.closeWindow("update");
+                windowManager.createWindow({
+                    id: "home",
+                    height: 720,
+                    width: 1024,
+                    url: "home",
+                    resizeable: true,
+                });
                 break;
             case "error":
                 ipcWebContentsSend("CHANNEL_APP_UPDATE", windowManager.getWindow("update").webContents, {
@@ -123,7 +123,7 @@ app.whenReady().then(() => {
     ipcMainOn("CHANNEL_PORT_ACTIONS", async (event, payload) => {
         switch (payload.event) {
             case "CONNECT": {
-                await serial.connect(payload.data.path, payload.data.baudRate, (data) => ipcWebContentsSend("CHANNEL_SERIAL_DATA", windowManager.getWindow("home").webContents, {
+                await serial.connect(payload.data.port, (data) => ipcWebContentsSend("CHANNEL_SERIAL_DATA", windowManager.getWindow("home").webContents, {
                     path: data.path,
                     data: parser.parser(data.data),
                 }));
@@ -131,12 +131,12 @@ app.whenReady().then(() => {
                 break;
             }
             case "DISCONNECT": {
-                await serial.disconnect(payload.data.path);
+                await serial.disconnect(payload.data.port);
                 ipcWebContentsSend("CHANNEL_PORT_INFO", windowManager.getWindow("home").webContents, await serial.scanPorts());
                 break;
             }
             case "WRITE": {
-                await serial.write(payload.data.path, payload.data.packet);
+                await serial.write(payload.data.port, payload.data.packet);
                 break;
             }
         }

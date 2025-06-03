@@ -123,39 +123,41 @@ class serialModule {
   }
 
   public async connect(
-    pathList: string[],
-    baudRate: number,
+    portList: { path: string; baudRate: number }[],
     handler: (data: IConnectHandler) => void
   ) {
     const result = [];
-    for (const path of pathList) {
+    for (const port of portList) {
       try {
-        await this._connect(path, baudRate, handler, 1000);
+        await this._connect(port.path, port.baudRate, handler, 1000);
       } catch (err) {
-        result.push({ path, err });
+        result.push({ path: port.path, err });
       }
     }
 
     return result;
   }
 
-  public async disconnect(pathList: string[]) {
+  public async disconnect(portList: { path: string; baudRate: number }[]) {
     const result = [];
-    for (const path of pathList) {
+    for (const port of portList) {
       try {
-        await this._disconnect(path, 1000);
+        await this._disconnect(port.path, 1000);
       } catch (err) {
-        result.push({ path: path, err });
+        result.push({ path: port.path, err });
       }
     }
     return result;
   }
 
-  public async write(pathList: string[], data: number[]) {
+  public async write(
+    portList: { path: string; baudRate: number }[],
+    data: number[]
+  ) {
     const result = [];
-    for (const path of pathList) {
+    for (const port of portList) {
       try {
-        await this._write(path, data, 1000);
+        await this._write(port.path, data, 1000);
       } catch (err) {
         result.push(err);
       }
