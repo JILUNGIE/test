@@ -54,14 +54,16 @@ app.whenReady().then(() => {
                         message: "업데이트 없음....",
                     },
                 });
-                windowManager.closeWindow("update");
-                windowManager.createWindow({
-                    id: "home",
-                    height: 720,
-                    width: 1024,
-                    url: "home",
-                    resizeable: true,
-                });
+                if (process.env.NODE_ENV !== "development") {
+                    windowManager.closeWindow("update");
+                    windowManager.createWindow({
+                        id: "home",
+                        height: 720,
+                        width: 1024,
+                        url: "home",
+                        resizeable: true,
+                    });
+                }
                 break;
             case "error":
                 ipcWebContentsSend("CHANNEL_APP_UPDATE", windowManager.getWindow("update").webContents, {
@@ -75,7 +77,8 @@ app.whenReady().then(() => {
                 ipcWebContentsSend("CHANNEL_APP_UPDATE", windowManager.getWindow("update").webContents, {
                     event: "download-progress",
                     data: {
-                        message: `업데이트 진행 중.... ${data}%}`,
+                        message: `업데이트 진행 중.... ${data?.toFixed(1)}%}`,
+                        progress: Number(data?.toFixed(1)),
                     },
                 });
                 break;

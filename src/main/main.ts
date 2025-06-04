@@ -110,7 +110,8 @@ app.whenReady().then(() => {
           {
             event: "download-progress",
             data: {
-              message: `업데이트 진행 중.... ${data}%}`,
+              message: `업데이트 진행 중.... ${data?.toFixed(1)}%}`,
+              progress: Number(data?.toFixed(1)),
             },
           }
         );

@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import Model from "../components/Model";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import BaseChart from "../components/BaseChart";
 
 // interface IOutletContext {
@@ -10,6 +10,19 @@ import BaseChart from "../components/BaseChart";
 
 function DeviceInfo() {
   const serialDataRef = useRef<number[][]>([]);
+  const [gyro, setGyro] = useState<
+    {
+      x: number;
+      y: number;
+      z: number;
+    }[]
+  >([
+    {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+  ]);
   const RPYdata = useRef<{
     roll: number;
     pitch: number;
@@ -19,28 +32,11 @@ function DeviceInfo() {
     pitch: 0,
     yaw: 0,
   });
-  const IMUdata = useRef<{
-    gyroX: number;
-    gyroY: number;
-    gyroZ: number;
 
-    accelX: number;
-    accelY: number;
-    accelZ: number;
-  }>({
-    gyroX: 0,
-    gyroY: 0,
-    gyroZ: 0,
-
-    accelX: 0,
-    accelY: 0,
-    accelZ: 0,
-  });
-
-  // const toInt16 = (msb: number, lsb: number) => {
-  //   const val = (msb << 8) | lsb;
-  //   return val > 32767 ? val - 65536 : val;
-  // };
+  const toInt16 = (msb: number, lsb: number) => {
+    const val = (msb << 8) | lsb;
+    return val > 32767 ? val - 65536 : val;
+  };
 
   useEffect(() => {
     window.electron.subscribeChannelSerialData((payload) => {
@@ -48,41 +44,70 @@ function DeviceInfo() {
         serialDataRef.current = payload.data.packet;
       }
 
-      console.log(serialDataRef.current[0]);
+      if (serialDataRef.current[0]) {
+        switch (serialDataRef.current[0][1]) {
+          case 0x09:
+            RPYdata.current.roll = toInt16(
+              serialDataRef.current[0][3],
+              serialDataRef.current[0][4]
+            );
+            RPYdata.current.pitch = toInt16(
+              serialDataRef.current[0][5],
+              serialDataRef.current[0][6]
+            );
+            RPYdata.current.yaw = toInt16(
+              serialDataRef.current[0][7],
+              serialDataRef.current[0][8]
+            );
+            break;
+          case 0x06: {
+            const gyroData = {
+              x: toInt16(
+                serialDataRef.current[0][3],
+                serialDataRef.current[0][4]
+              ),
+              y: toInt16(
+                serialDataRef.current[0][5],
+                serialDataRef.current[0][6]
+              ),
+              z: toInt16(
+                serialDataRef.current[0][7],
+                serialDataRef.current[0][8]
+              ),
+            };
+            setGyro((prev) => {
+              if (prev.length < 10) {
+                return [...prev, gyroData];
+              } else {
+                return [...prev.slice(1), gyroData];
+              }
+            });
+            break;
+          }
+        }
+      }
     });
   }, []);
 
-  useEffect(() => {
-    console.log(RPYdata);
-  }, [RPYdata]);
-  useEffect(() => {
-    console.log(IMUdata);
-  }, [IMUdata]);
   //const { path } = useParams();
+  const xData = gyro.map((g) => ({ value: g.x }));
+  const yData = gyro.map((g) => ({ value: g.y }));
+  const zData = gyro.map((g) => ({ value: g.z }));
+
   return (
     <div className="flex w-full h-full 2xl:flex-col mt-2 2xl:mt-10">
       <div className="w-full h-full flex flex-col justify-between 2xl:h-[50%]">
         <span>X</span>
         <div className="w-full h-15 ">
-          <BaseChart
-            data={[
-              { value: 1 },
-              { value: 4 },
-              { value: 5 },
-              { value: 4 },
-              { value: 4 },
-              { value: 4 },
-              { value: 4 },
-            ]}
-          />
+          <BaseChart data={xData} />
         </div>
         <span>Y</span>
         <div className="w-full h-15">
-          <BaseChart data={[{ value: 10 }, { value: 20 }, { value: 30 }]} />
+          <BaseChart data={yData} />
         </div>
         <span>Z</span>
         <div className="w-full h-15">
-          <BaseChart data={[{ value: 10 }, { value: 20 }, { value: 30 }]} />
+          <BaseChart data={zData} />
         </div>
       </div>
 

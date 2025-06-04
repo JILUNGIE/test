@@ -1,7 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 function useTheme() {
-  const dark = useRef<boolean>(localStorage.getItem("theme") === "dark");
+  const [dark, setDark] = useState<boolean>(
+    localStorage.getItem("theme") === "dark"
+  );
 
   useEffect(() => {
     const getTheme = async () => {
@@ -9,11 +11,11 @@ function useTheme() {
       if (result.dark) {
         document.documentElement.classList.add("dark");
         localStorage.setItem("theme", "dark");
-        dark.current = true;
+        setDark(true);
       } else {
         document.documentElement.classList.remove("dark");
         localStorage.setItem("theme", "light");
-        dark.current = false;
+        setDark(false);
       }
     };
 
@@ -22,14 +24,14 @@ function useTheme() {
 
   const toggleDark = async () => {
     await window.electron.theme({ event: "toggle" });
-    if (dark.current) {
+    if (dark) {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
-      dark.current = false;
+      setDark(false);
     } else {
       document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
-      dark.current = true;
+      setDark(true);
     }
   };
 
