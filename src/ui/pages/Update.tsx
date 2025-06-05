@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ReactLogo from "../components/svg/ReactLogo";
+import ReactLogo from "../assets/svg/ReactLogo";
 
 function Update() {
   const [updateState, setUpdateState] = useState<IUpdatePayload>({

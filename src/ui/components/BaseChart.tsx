@@ -6,26 +6,20 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import useTheme from "../hooks/useTheme";
-import { useEffect } from "react";
 
 interface IBaseChart {
   data: { value: number | undefined }[];
+  isDark: boolean;
 }
 
-function BaseChart({ data }: IBaseChart) {
-  const { dark } = useTheme();
-  useEffect(() => {
-    console.log(dark);
-  }, [dark]);
-  //#1C1C1C
+function BaseChart({ data, isDark }: IBaseChart) {
   return (
     <ResponsiveContainer>
       <AreaChart data={data}>
         <CartesianGrid
           stroke="#333"
           strokeDasharray="5 5"
-          fill={dark ? "#1c1c1c" : "#a8a8a8"}
+          fill={isDark ? "#1c1c1c" : "#a8a8a8"}
         />
         <Area
           fillOpacity={0.3}

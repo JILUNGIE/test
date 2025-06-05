@@ -214,38 +214,6 @@ app.whenReady().then(() => {
     }
   });
 
-  // ipcMainOn("channel-req-port", async (event, payload) => {
-  //   const status = payload.status;
-  //   const portList = payload.portInfo;
-  //   const data = payload.data;
-
-  //   let errMsg = null;
-
-  //   if (status === "CONNECT")
-  //     errMsg = await serial.connect(portList, (data) => {
-  //       // ipcWebContentsSend(
-  //       //   "CHANNEL_SERIAL_DATA",
-  //       //   windowManager.getWindow("home")!.webContents,
-  //       //   { data: parser.parser(data) }
-  //       // );
-  //     });
-  //   else if (status === "DISCONNECT")
-  //     errMsg = await serial.disconnect(portList);
-  //   else if (status === "SEND_DATA")
-  //     errMsg = await serial.write(portList, data);
-
-  //   sendErrorMsg(
-  //     windowManager.getWindow("home")!.webContents,
-  //     errMsg as string[]
-  //   );
-
-  //   // ipcWebContentsSend(
-  //   //   "",
-  //   //   windowManager.getWindow("home")!.webContents,
-  //   //   serial.connectedList()
-  //   // );
-  // });
-
   windowManager.getWindow("update")!.webContents.on("did-finish-load", () => {
     if (isDev()) {
       windowManager.closeWindow("update");

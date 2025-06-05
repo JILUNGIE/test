@@ -1,6 +1,29 @@
 const SidebarItems = [
   {
     id: 1,
+    path: "/info",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        viewBox="0 0 24 24"
+        className="size-8"
+      >
+        <rect x="3" y="4" width="18" height="14" rx="2" ry="2" />
+        <line x1="8" y1="20" x2="16" y2="20" />
+        <line x1="12" y1="18" x2="12" y2="14" />
+        <circle cx="12" cy="10" r="1" />
+      </svg>
+    ),
+  },
+  {
+    id: 2,
     path: "/home",
     icon: (
       <svg
@@ -20,7 +43,7 @@ const SidebarItems = [
     ),
   },
   {
-    id: 2,
+    id: 3,
     path: "/wireless",
     icon: (
       <svg
